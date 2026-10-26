@@ -35,12 +35,12 @@ dub test
 * Spec: link:docs/modules/command-namespace/pages/spec.adoc[spec.adoc] (NS-1..NS-14, v0 draft)
 * Provisional decisions: link:docs/modules/command-namespace/pages/provisional.adoc[provisional.adoc]
 * Schemas: link:schema/[schema/] (namespace node, registration manifest, input signature)
-* Example manifest: link:examples/npm.manifest.json[examples/npm.manifest.json]
+* Example manifest: link:examples/npm.manifest.json5[examples/npm.manifest.json5]
 
 == Related
 
 * https://github.com/openshellorg/command-namespace[command-namespace] - spec, schemas, registry library
-* https://github.com/openshellorg/ns[ns] - inspection and audit
+* https://github.com/openshellorg/name[name] - inspection and audit (`name which`, `name conflicts`)
 * https://github.com/openshellorg/install[install] - resolver front door
 * https://github.com/openshellorg/versions[versions] - version manager
 * https://github.com/openshellorg/isolate[isolate] - isolation levels front door

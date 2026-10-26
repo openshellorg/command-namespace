@@ -1,9 +1,10 @@
-/// Load registration manifests (JSON, PROVISIONAL format) into nodes (NS-2).
+/// Load registration manifests (JSON5; plain JSON is valid JSON5) into nodes (NS-2).
 module command_namespace.manifest;
 
 import std.json;
 import std.conv : to;
 import command_namespace.node;
+import command_namespace.json5 : parseJSON5, JSON5Exception;
 import command_namespace.registry : RegistrationError;
 
 /// Parse a manifest document and return its claims as nodes.
@@ -11,8 +12,9 @@ import command_namespace.registry : RegistrationError;
 Node[] parseManifest(string text, string sourceName = "manifest")
 {
     JSONValue j;
-    try j = parseJSON(text);
-    catch (JSONException e) throw new RegistrationError(sourceName ~ ": not valid JSON: " ~ e.msg);
+    try j = parseJSON5(text);
+    catch (JSON5Exception e) throw new RegistrationError(sourceName ~ ":" ~ e.msg);
+    catch (JSONException e) throw new RegistrationError(sourceName ~ ": not valid JSON5: " ~ e.msg);
     if (j.type != JSONType.object) throw new RegistrationError(sourceName ~ ": manifest must be an object");
 
     auto ver = "manifest" in j;
@@ -72,7 +74,7 @@ unittest
     import std.exception : assertThrown;
     import command_namespace.registry : Registry, ResolveStatus;
 
-    auto path = "examples/npm.manifest.json";
+    auto path = "examples/npm.manifest.json5";
     assert(exists(path), "run tests from the repository root");
     auto nodes = parseManifest(readText(path), path);
     assert(nodes.length == 2);
@@ -87,4 +89,9 @@ unittest
     assertThrown!RegistrationError(parseManifest(`{"manifest":0,"package":{"id":"x","version":"1"},"claims":[{"path":"BAD","kind":"command"}]}`));
     assertThrown!RegistrationError(parseManifest(`not json`));
     assert(reg.resolve("install/npm").status == ResolveStatus.found);
+    // JSON5 conveniences in a manifest
+    auto n2 = parseManifest(`{manifest: 0, package: {id: 'x', version: '1'}, // c
+        claims: [{path: 'tool', kind: 'command',},],}`);
+    assert(n2.length == 1 && n2[0].path == "tool");
+    assertThrown!RegistrationError(parseManifest(`{manifest: 0, x: Infinity}`));
 }

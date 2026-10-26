@@ -2,4 +2,8 @@
 
 == Unreleased
 
+* Manifests are JSON5 (`examples/npm.manifest.json5`). New `json5.d` translator (comments, trailing commas, unquoted keys, single quotes, hex, line continuations; rejects Infinity/NaN), with unit tests. JSON Schemas validate the parsed data.
+* `+` free-flag sigil is decided (no longer PROVISIONAL).
+* Proposed (PROVISIONAL) storage: SQLite index compiled from JSON5 manifests; YAML, SQLite and a JSON5 file tree compared, with draft tables. Not implemented.
+* The inspection tool `ns` is now `name`.
 * Initial scaffold: README, MIT license, Antora component `tools` module `command-namespace`, encoding guard. Seed: https://github.com/openshellorg/project-plans/blob/main/seeds/2026-10-26%20-%20hierarchical-command-namespace.md

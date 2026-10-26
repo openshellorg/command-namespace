@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://opensh.org/schema/command-namespace/v0/registration-manifest.schema.json",
   "title": "Registration manifest",
-  "description": "How a tool claims namespace nodes (NS-2, NS-3). PROVISIONAL v0; format JSON (PROVISIONAL).",
+  "description": "How a tool claims namespace nodes (NS-2, NS-3). PROVISIONAL v0; authored as JSON5 (*.manifest.json5); this schema validates the parsed data.",
   "type": "object",
   "required": ["manifest", "package", "claims"],
   "additionalProperties": false,

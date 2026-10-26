@@ -1,31 +1,139 @@
-= Provisional decisions
-:description: Open design questions answered provisionally in command-namespace v0, with reasons.
+= Design decisions
+:description: Design questions for command-namespace v0: what is decided, what is PROVISIONAL, and why.
 :page-orig-author: Grok Bot on behalf of Ryan Johnson
 :page-orig-author-github: AMDphreak
 
-These answers are PROVISIONAL. Any of them can change before v1.
+Rows marked *PROVISIONAL* can change before v1. Rows marked *Decided* are settled.
 
-[cols="1,1,3"]
+[cols="1,1,1,3"]
 |===
-|Question |Provisional answer |Why
+|Question |Answer |Status |Why
 
 |Free-flag sigil
 |`+` (for example `+yes`, `++verbose`)
-|`-` and `--` already belong to each tool's own flags, and `+` is seldom used by existing CLIs. Repeating it (`+`, `++`, `+++`) maps to `levels`.
+|Decided
+|Free flags are unordered and mean the same thing in every command, and `+` says exactly that: you add things together, and the order doesn't matter (`+yes +verbose` = `+verbose +yes`). `-` and `--` stay with each tool's own flags. Repeating the sigil (`+`, `++`, `+++`) steps through `levels`.
 
 |Manifest format
-|JSON, validated by JSON Schema (draft 2020-12), with `"manifest": 0`
-|It matches the org's existing manifests (shell-framework `manifests/*.json`), every language can parse it without extra libraries, and editors can validate it through `$schema`. SDL (as used by shell-context) is kept as a possible authoring syntax that compiles to this JSON later.
+|JSON5 (`*.manifest.json5`), `manifest: 0`, validated by JSON Schema after parsing
+|Decided
+|Manifests are written by people, so comments, trailing commas and unquoted keys help. JSON5 parses to the JSON data model, so the existing JSON Schemas (draft 2020-12) still validate it, and plain JSON is still valid input. The D library uses a small in-repo JSON5-to-JSON translator (`json5.d`, unit-tested) feeding `std.json`. On code.dlang.org, `ddn-data-json5` is retired (merged into the larger `ddn` package) and `jsoniopipe` would pull in `iopipe`, so an in-repo translator keeps the library dependency-free. Infinity and NaN are rejected because JSON has no equivalent.
+
+|Namespace tree storage
+|SQLite index compiled from the JSON5 manifests
+|PROVISIONAL
+|See <<storage>>.
 
 |Fallback name for `install` in legacy shells
 |`osh-install`
+|PROVISIONAL
 |`install` already exists on Unix (coreutils `install`), so the front door can't take over that name in shells that still use PATH. `osh-` is a short Open Shell prefix that no common tool uses. Inside the namespace the verb is still `install`.
 
 |Implementation language
 |D (LDC), packaged with dub
+|PROVISIONAL
 |The Open Shell runtime and shell-context stubs are in D. It builds native single binaries for Windows, Linux and macOS.
 
 |Legacy subtree name
 |`legacy/`
+|PROVISIONAL
 |The name says what the subtree is, and it sorts away from real verbs.
+
+|Inspection tool name
+|`name` (`name which git`, `name conflicts`)
+|Decided
+|`name` reads as a verb or a noun depending on the rest of the command. No existing `name` command was found in WSL, pwsh or cmd, or in Debian, Ubuntu, Arch, Homebrew or PyPI. Formerly `ns`.
 |===
+
+[#storage]
+== Namespace tree storage (PROVISIONAL)
+
+The tree has two layers:
+
+* *Source of truth:* the JSON5 registration manifests, one per package. People and installers write these.
+* *Compiled index:* a store built from the manifests that answers resolve, children and conflict queries quickly. It can always be rebuilt, so it is a cache, not data.
+
+=== Options compared
+
+[cols="1,2,2,2"]
+|===
+|Need |YAML file(s) |SQLite index |JSON5 file tree (one file per node or package)
+
+|Concurrent installer writes
+|Poor. One shared file means read-modify-write races, and it needs an external lock file.
+|Good. Transactions with WAL; several installers can register at once, and a conflicting claim fails atomically.
+|Fair. One file per package avoids most races, but a check-then-write across files still needs a lock.
+
+|Conflict-query speed
+|Poor. Parse everything, then scan.
+|Good. An index on `path`; `GROUP BY path HAVING count(*) > 1` is one query.
+|Fair. Walk and parse the tree, or keep a separate index anyway.
+
+|Human inspectability
+|Good.
+|Fair. Needs `sqlite3` or `name` to look inside. Mitigated because the manifests stay readable.
+|Good.
+
+|Diffability
+|Good, but one big file gives noisy diffs.
+|Poor as a binary file. Mitigated: diff the manifests, or dump the index as text.
+|Good, with small focused diffs.
+
+|Fits the JSON5 source decision
+|Adds a second text format.
+|Yes. It is a compiled view of the manifests.
+|Yes, but then it is also the index, so it still has the query problem.
+|===
+
+=== Recommendation
+
+*SQLite as the compiled index, with JSON5 manifests as the source of truth* (PROVISIONAL). This keeps the readable, diffable parts (the manifests) readable and diffable, and gives the tool safe concurrent writes and fast conflict checks where they matter. If the index is lost or corrupted, a rebuild from the manifests restores it.
+
+Rules (proposed):
+
+* Installers write their manifest, then register it in one transaction. A refused conflict rolls back the whole package.
+* `name` and the shell read from the index. `name rebuild` (future) recompiles it from the manifests.
+* The index stores a hash of each manifest. If a manifest changes on disk, the index is out of date and gets rebuilt.
+
+=== Proposed tables
+
+[source,sql]
+----
+CREATE TABLE package (
+  id            TEXT NOT NULL,
+  version       TEXT NOT NULL,
+  manifest_path TEXT NOT NULL,
+  manifest_hash TEXT NOT NULL,   -- sha256 of the JSON5 source
+  policy        TEXT NOT NULL CHECK (policy IN ('refuse','shadow-with-warning')),
+  registered_at TEXT NOT NULL,
+  PRIMARY KEY (id, version)
+);
+
+CREATE TABLE claim (
+  rowid       INTEGER PRIMARY KEY,         -- registration order (shadowing)
+  path        TEXT NOT NULL,               -- node path, NS-1
+  parent      TEXT NOT NULL,               -- '' for top level; children queries
+  kind        TEXT NOT NULL CHECK (kind IN ('verb','provider','command','alias','group')),
+  summary     TEXT,
+  argv_json   TEXT,                        -- entry argv as a JSON array
+  style       TEXT NOT NULL DEFAULT 'strict',
+  target      TEXT,                        -- alias target
+  source      TEXT NOT NULL,               -- 'manifest:<id>@<ver>' or 'legacy:PATH:<dir>'
+  pkg_id      TEXT,
+  pkg_version TEXT,
+  FOREIGN KEY (pkg_id, pkg_version) REFERENCES package(id, version) ON DELETE CASCADE
+);
+CREATE INDEX claim_path   ON claim(path);
+CREATE INDEX claim_parent ON claim(parent);
+
+CREATE TABLE signature (
+  node      TEXT NOT NULL,
+  pkg_id    TEXT NOT NULL,
+  body_json TEXT NOT NULL                  -- input signature, validated JSON
+);
+
+-- conflicts (NS-3)
+-- SELECT path, count(*) FROM claim GROUP BY path HAVING count(*) > 1;
+----
+
+Not implemented in v0. The in-memory `Registry` is the reference behaviour that a store must match.

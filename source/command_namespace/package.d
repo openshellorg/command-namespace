@@ -5,3 +5,4 @@ module command_namespace;
 public import command_namespace.node;
 public import command_namespace.registry;
 public import command_namespace.manifest;
+public import command_namespace.json5;

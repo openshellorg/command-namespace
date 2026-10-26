@@ -16,7 +16,7 @@ The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 == Registration (NS-2)
 
-* A tool claims nodes through a *registration manifest* (`schema/registration-manifest.schema.json`). Manifest format: JSON, version `0` (PROVISIONAL).
+* A tool claims nodes through a *registration manifest* (`schema/registration-manifest.schema.json`). Manifests are written in JSON5 (`*.manifest.json5`), format version `0`. JSON5 parses to the JSON data model, so the JSON Schema validates the parsed value. Plain JSON is valid JSON5.
 * Every claim records its owning package id and version. A registry MUST be able to answer "who owns this path".
 * An alias MUST name a valid target path. The registry follows aliases while resolving and MUST detect loops.
 
@@ -43,7 +43,7 @@ The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 == Token tables (NS-7)
 
-* A node MAY declare its subcommands, contextual flags (meaning depends on the verb) and free flags (meaning is the same everywhere). Free flags use the `+` sigil (PROVISIONAL), and repeating the sigil steps through `levels`.
+* A node MAY declare its subcommands, contextual flags (meaning depends on the verb) and free flags (meaning is the same everywhere). Free flags use the `+` sigil (decided), and repeating the sigil steps through `levels`.
 
 == Changed-since markers (NS-8)
 
@@ -62,12 +62,17 @@ The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 * Levels overlay / fence / partition / guest x lifetimes run / session / kept x scope. Owned by https://github.com/openshellorg/isolate[isolate]. Not part of this library.
 
+== Storage (PROVISIONAL)
+
+* The JSON5 manifests are the editable source of truth. A registry MAY compile them into an index for fast queries. The proposed index is SQLite; see xref:provisional.adoc#storage[Provisional decisions]. The index can always be rebuilt from the manifests and MUST NOT be edited by hand.
+
 == Reference library
 
 `source/command_namespace` (D, dub package `command-namespace`):
 
 * `node.d`: `Node`, `NodeKind`, `isValidPath`, `parentOf`
 * `registry.d`: `Registry.register / resolve / conflicts / suggest / children`
-* `manifest.d`: `parseManifest` for JSON manifests (format version 0)
+* `manifest.d`: `parseManifest` for JSON5 manifests (format version 0)
+* `json5.d`: small JSON5-to-JSON translator (`parseJSON5`, `json5ToJson`)
 
 Run `dub test` from the repository root.
