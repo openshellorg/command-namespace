@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opensh.org/schema/command-namespace/v0/namespace-node.schema.json",
+  "title": "Namespace node",
+  "description": "One node of the command namespace (NS-1). PROVISIONAL v0.",
+  "type": "object",
+  "required": [
+    "path",
+    "kind"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "nodePath": {
+      "type": "string",
+      "description": "Slash-separated words. Each word: lowercase letter or digit, then lowercase letters, digits, '.', '_', '+', '-'.",
+      "pattern": "^[a-z0-9][a-z0-9._+-]*(/[a-z0-9][a-z0-9._+-]*)*$"
+    },
+    "flag": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "role": {
+          "type": "string"
+        },
+        "levels": {
+          "type": "object",
+          "description": "Meaning per sigil repetition count (1, 2, 3...).",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "path": {
+      "$ref": "#/$defs/nodePath"
+    },
+    "kind": {
+      "enum": [
+        "verb",
+        "provider",
+        "command",
+        "alias",
+        "group"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "manager": {
+          "$ref": "#/$defs/nodePath"
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "argv"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "argv": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "style": {
+          "enum": [
+            "strict",
+            "resolver"
+          ],
+          "default": "strict"
+        }
+      }
+    },
+    "target": {
+      "$ref": "#/$defs/nodePath",
+      "description": "Required when kind is alias."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Reference to an input signature (input-signature.schema.json)."
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subcommands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contextual-flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/flag"
+          }
+        },
+        "free-flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/flag"
+          }
+        }
+      }
+    },
+    "versions": {
+      "type": "object",
+      "properties": {
+        "current": {
+          "type": "string"
+        },
+        "installed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "changed-since": {
+      "type": "object",
+      "description": "NS-8: commands and flags added/removed/changed since a previous version (key).",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "stability": {
+      "enum": [
+        "stable",
+        "experimental",
+        "deprecated"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "alias"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "target"
+        ]
+      }
+    }
+  ]
+}

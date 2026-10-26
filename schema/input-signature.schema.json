@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opensh.org/schema/command-namespace/v0/input-signature.schema.json",
+  "title": "Input signature",
+  "description": "Which ambient context a command will request (NS-9, NS-10). Declarations, not enforcement. PROVISIONAL v0.",
+  "type": "object",
+  "required": ["signature", "node"],
+  "additionalProperties": false,
+  "$defs": {
+    "use": { "enum": ["none", "read", "write"] }
+  },
+  "properties": {
+    "signature": { "const": 0 },
+    "node": { "type": "string" },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cwd": {
+          "type": "object",
+          "required": ["use"],
+          "additionalProperties": false,
+          "properties": {
+            "use": { "$ref": "#/$defs/use" },
+            "when": { "type": "string", "description": "\"always\" or \"flag:<name>\"", "default": "always" }
+          }
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "use"],
+            "additionalProperties": false,
+            "properties": { "name": { "type": "string" }, "use": { "$ref": "#/$defs/use" } }
+          }
+        },
+        "identity": { "type": "string" },
+        "network": { "enum": ["none", "optional", "required"] },
+        "stdin": { "enum": ["none", "text", "rows"] }
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "repeat": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "effects": {
+      "type": "object",
+      "properties": { "writes": { "type": "array", "items": { "type": "string" } } }
+    }
+  }
+}

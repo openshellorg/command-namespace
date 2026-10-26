@@ -1,0 +1,73 @@
+= Command namespace specification (v0)
+:description: Normative rules for the hierarchical command namespace: node paths, registration, conflicts, legacy PATH import, resolution and input signatures.
+:page-orig-author: Grok Bot on behalf of Ryan Johnson
+:page-orig-author-github: AMDphreak
+
+Status: *draft v0*. The rule numbers match xref:open-shell-org::concept-command-namespace.adoc[the concept page] (NS-1..NS-14). Items marked PROVISIONAL are listed in xref:provisional.adoc[].
+
+The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
+
+== Nodes and paths (NS-1)
+
+* The namespace is a tree. A *node path* is one or more words separated by `/`.
+* A word MUST match `[a-z0-9][a-z0-9._+-]*`. Paths are lowercase. A shell MAY fold case on input on case-insensitive platforms, but stored paths are lowercase.
+* Every node has a kind: `verb` (an action such as `install`), `provider` (one way to do a verb, such as `install/npm`), `command` (a plain runnable), `alias` (points at another path) or `group` (a container with no entry of its own).
+* Schema: `schema/namespace-node.schema.json`.
+
+== Registration (NS-2)
+
+* A tool claims nodes through a *registration manifest* (`schema/registration-manifest.schema.json`). Manifest format: JSON, version `0` (PROVISIONAL).
+* Every claim records its owning package id and version. A registry MUST be able to answer "who owns this path".
+* An alias MUST name a valid target path. The registry follows aliases while resolving and MUST detect loops.
+
+== Conflicts (NS-3)
+
+* Two claims on one path MUST NOT be resolved silently by "last installed wins".
+* If any claimant's policy is `refuse`, the path is *ambiguous*: resolving it MUST fail and report every claimant.
+* If every claimant's policy is `shadow-with-warning`, the first registered claim wins. The others are *shadowed* and MUST still appear in conflict reports.
+
+== Discovery (NS-4)
+
+* Resolving an unknown name MUST NOT fail bare. Tools SHOULD offer did-you-mean candidates (edit distance on the last word and on the full path).
+* `children(path)` lists a node's direct children, so every level of the tree can be browsed.
+
+== Legacy PATH (NS-5)
+
+* Entries found on the platform `PATH` are imported under `legacy/<name>` with policy `shadow-with-warning`, in PATH order. This keeps today's PATH order while making the shadowing visible.
+* On Windows, within one folder, `PATHEXT` order picks which file `<name>` means. Names are case-folded.
+* A top-level name resolves to its namespace claim first, then to `legacy/<name>`.
+
+== CLI style (NS-6)
+
+* Each runnable node declares `entry.style`: `strict` (the default, CLI Styles CS-1) or `resolver`.
+
+== Token tables (NS-7)
+
+* A node MAY declare its subcommands, contextual flags (meaning depends on the verb) and free flags (meaning is the same everywhere). Free flags use the `+` sigil (PROVISIONAL), and repeating the sigil steps through `levels`.
+
+== Changed-since markers (NS-8)
+
+* A node MAY carry `changed-since`, keyed by an earlier version, listing tokens that were added, removed or changed. Tools use it to warn about scripts written for older versions.
+
+== Input signatures (NS-9, NS-10)
+
+* An input signature (`schema/input-signature.schema.json`) declares which ambient context a command asks for: the current folder (`none`/`read`/`write`, always or only under a flag), environment variables, identity, network and stdin, plus its typed inputs and effects.
+* Signatures are declarations, not sandboxing. Isolation is the `isolate` front door's job (NS-13, NS-14).
+
+== Composition block (NS-11, NS-12)
+
+* Defined on the concept page. This version of the library does not implement it.
+
+== Isolation (NS-13, NS-14)
+
+* Levels overlay / fence / partition / guest x lifetimes run / session / kept x scope. Owned by https://github.com/openshellorg/isolate[isolate]. Not part of this library.
+
+== Reference library
+
+`source/command_namespace` (D, dub package `command-namespace`):
+
+* `node.d`: `Node`, `NodeKind`, `isValidPath`, `parentOf`
+* `registry.d`: `Registry.register / resolve / conflicts / suggest / children`
+* `manifest.d`: `parseManifest` for JSON manifests (format version 0)
+
+Run `dub test` from the repository root.

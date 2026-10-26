@@ -1,0 +1,9 @@
+{
+    "name": "command-namespace",
+    "description": "Hierarchical command namespace: node model, manifest loading and a reference registry.",
+    "authors": ["Ryan Johnson"],
+    "license": "MIT",
+    "targetType": "library",
+    "sourcePaths": ["source"],
+    "importPaths": ["source"]
+}

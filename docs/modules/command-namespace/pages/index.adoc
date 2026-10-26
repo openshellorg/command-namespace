@@ -1,0 +1,10 @@
+= command-namespace
+:description: Hierarchical command namespace: normative spec, JSON Schemas and a D reference registry library.
+:page-orig-author: Grok Bot on behalf of Ryan Johnson
+:page-orig-author-github: AMDphreak
+
+Hierarchical command namespace: normative spec, JSON Schemas and a D reference registry library.
+
+Status: spec + schemas + registry library (v0). See xref:spec.adoc[] and xref:provisional.adoc[].
+
+Design seed: link:https://github.com/openshellorg/project-plans/blob/main/seeds/2026-10-26%20-%20hierarchical-command-namespace.md[project-plans]. Concept: xref:open-shell-org::concept-command-namespace.adoc[Command namespace and context requests].

@@ -1,0 +1,54 @@
+ifndef::env-github[:icons: font]
+:toc: preamble
+:toclevels: 2
+:sectanchors:
+
+image:https://img.shields.io/github/contributors/openshellorg/command-namespace.svg?style=for-the-badge[Contributors,link=https://github.com/openshellorg/command-namespace/graphs/contributors]
+image:https://img.shields.io/github/stars/openshellorg/command-namespace.svg?style=for-the-badge[Stars,link=https://github.com/openshellorg/command-namespace/stargazers]
+image:https://img.shields.io/github/issues/openshellorg/command-namespace.svg?style=for-the-badge[Issues,link=https://github.com/openshellorg/command-namespace/issues]
+image:https://img.shields.io/github/license/openshellorg/command-namespace.svg?style=for-the-badge[License,link=https://github.com/openshellorg/command-namespace/blob/main/LICENSE]
+
+= command-namespace
+
+Hierarchical command namespace: normative spec, JSON Schemas and a D reference registry library.
+
+link:https://github.com/openshellorg/command-namespace/issues[Report Bug] |
+link:https://github.com/openshellorg/command-namespace/issues[Request Feature] |
+link:https://docs.opensh.org/tools/command-namespace/index.html[Explore the docs]
+
+== About The Project
+
+Part of the OpenShellOrg command-namespace work: the shell finds commands in a hierarchical, task-shaped namespace instead of searching `PATH`.
+Design seed: link:https://github.com/openshellorg/project-plans/blob/main/seeds/2026-10-26%20-%20hierarchical-command-namespace.md[project-plans seed]. Concept page: link:https://docs.opensh.org/open-shell-org/concept-command-namespace.html[Command namespace and context requests].
+
+Status: spec + schemas + registry library (v0).
+
+== Getting Started
+
+Needs LDC 1.40+ and dub.
+
+[source,shell]
+----
+dub test
+----
+
+* Spec: link:docs/modules/command-namespace/pages/spec.adoc[spec.adoc] (NS-1..NS-14, v0 draft)
+* Provisional decisions: link:docs/modules/command-namespace/pages/provisional.adoc[provisional.adoc]
+* Schemas: link:schema/[schema/] (namespace node, registration manifest, input signature)
+* Example manifest: link:examples/npm.manifest.json[examples/npm.manifest.json]
+
+== Related
+
+* https://github.com/openshellorg/command-namespace[command-namespace] - spec, schemas, registry library
+* https://github.com/openshellorg/ns[ns] - inspection and audit
+* https://github.com/openshellorg/install[install] - resolver front door
+* https://github.com/openshellorg/versions[versions] - version manager
+* https://github.com/openshellorg/isolate[isolate] - isolation levels front door
+
+== License
+
+MIT - see link:LICENSE[].
+
+== Contact
+
+Open Shell Org - openshell@devcentr.org
