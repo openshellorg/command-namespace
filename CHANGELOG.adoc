@@ -2,6 +2,7 @@
 
 == Unreleased
 
+* The resolver command is literally `install` (Decided, replaces the `osh-install` fallback). New section on coexisting with install(1): `legacy/install`, PATH guidance, PROVISIONAL passthrough.
 * Manifests are JSON5 (`examples/npm.manifest.json5`). New `json5.d` translator (comments, trailing commas, unquoted keys, single quotes, hex, line continuations; rejects Infinity/NaN), with unit tests. JSON Schemas validate the parsed data.
 * `+` free-flag sigil is decided (no longer PROVISIONAL).
 * Proposed (PROVISIONAL) storage: SQLite index compiled from JSON5 manifests; YAML, SQLite and a JSON5 file tree compared, with draft tables. Not implemented.

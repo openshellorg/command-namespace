@@ -11,7 +11,7 @@ The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 * The namespace is a tree. A *node path* is one or more words separated by `/`.
 * A word MUST match `[a-z0-9][a-z0-9._+-]*`. Paths are lowercase. A shell MAY fold case on input on case-insensitive platforms, but stored paths are lowercase.
-* Every node has a kind: `verb` (an action such as `install`), `provider` (one way to do a verb, such as `install/npm`), `command` (a plain runnable), `alias` (points at another path) or `group` (a container with no entry of its own).
+* Every node has a kind: `verb` (an action such as `install`; the resolver's command is literally `install`, and on Unix `install(1)` lives at `legacy/install`, see xref:provisional.adoc#install-coexistence[Coexisting with install(1)]), `provider` (one way to do a verb, such as `install/npm`), `command` (a plain runnable), `alias` (points at another path) or `group` (a container with no entry of its own).
 * Schema: `schema/namespace-node.schema.json`.
 
 == Registration (NS-2)

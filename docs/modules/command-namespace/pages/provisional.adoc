@@ -24,10 +24,15 @@ Rows marked *PROVISIONAL* can change before v1. Rows marked *Decided* are settle
 |PROVISIONAL
 |See <<storage>>.
 
-|Fallback name for `install` in legacy shells
-|`osh-install`
+|Command name for the resolver
+|`install` (literally; no prefixed fallback)
+|Decided
+|Ryan's rationale: "I wanted the command to literally be 'install' not 'osh-install' otherwise it breaks the illusion of a seamless unified interface." In the namespace, `install` is the root `install` node and coreutils/BSD `install(1)` is registered at `legacy/install`, so `install` resolves to the resolver. See <<install-coexistence>>.
+
+|install(1) passthrough
+|Hand install(1)-style arguments to `legacy/install`
 |PROVISIONAL
-|`install` already exists on Unix (coreutils `install`), so the front door can't take over that name in shells that still use PATH. `osh-` is a short Open Shell prefix that no common tool uses. Inside the namespace the verb is still `install`.
+|Keeps `make install` style build scripts working. See <<install-coexistence>>.
 
 |Implementation language
 |D (LDC), packaged with dub
@@ -137,3 +142,14 @@ CREATE TABLE signature (
 ----
 
 Not implemented in v0. The in-memory `Registry` is the reference behaviour that a store must match.
+
+[#install-coexistence]
+== Coexisting with install(1)
+
+On Unix PATH-based shells, coreutils/BSD `install(1)` already exists and copies files and sets modes.
+
+* *Namespace model:* `install` is the root `install` node. `install(1)` is registered at `legacy/install`. `install` resolves to the resolver; `legacy/install` reaches the file copier.
+* *Plain PATH shells:* packaging MUST NOT overwrite `/usr/bin/install`. Put the resolver ahead on the user's PATH only (for example `~/.local/bin`), or use a shell alias or function. Never change the system PATH.
+* *Build scripts:* scripts that call `install(1)` with its file-copy flags (`-m`, `-D`, `-d`, `-o`, `-g`, ...) MUST keep working.
+* *Passthrough (PROVISIONAL, implemented in openshellorg/install):* when the arguments look like install(1) (any install(1) option, or an existing source file followed by a destination), the resolver hands them unchanged to the real install(1) at a fixed system path (`/usr/bin/install`, `/bin/install`, or Homebrew `ginstall`), never found by searching PATH, and returns its exit status. Resolver commands and flags (`search`, `managers`, `help`, `--help`, `--version`) always win, and bare `install` prints help.
+* *Windows:* there is no `install` command, so there is no clash.
